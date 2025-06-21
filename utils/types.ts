@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { FC } from 'react';
 
 export type userCreateProps = z.infer<typeof userCreateSchema>;
 
@@ -46,6 +47,8 @@ const userUpdateSchema = z.object({
   user_id: z.string().describe("user ID"),
 });
 
+export type ProfileType = 'VLINK' | 'VCARD';
+
 export interface MediaItem {
   id: string;
   type: "image" | "video";
@@ -59,31 +62,89 @@ export interface LinkItem {
   id: string;
   title: string;
   url: string;
-  isActive: boolean;
   icon?: string;
+  isActive: boolean;
   featured?: boolean;
-  type?: "link" | "gallery" | "video" | "music" | "contact";
-  media?: MediaItem[];
-  color?: string;
-  description?: string;
-  thumbnail?: string; // For video link thumbnails
+  thumbnailUrl?: string;
+  clicks: number;
 }
 
-export interface UserProfile {
+export interface GalleryImage {
   id: string;
-  displayName: string;
-  bio: string;
-  avatar: string;
-  username: string;
-  verified?: boolean;
-  links: LinkItem[];
-  gallery: { id: string; url: string; }[];
-  template: string;
-  coverImage?: string;
-  theme?: "dark" | "light" | "gradient";
-  stats?: {
-    followers: number;
-    following: number;
-    posts: number;
-  };
+  url: string;
+  altText?: string;
+}
+
+export interface Service {
+  id: string;
+  title: string;
+  description?: string;
+  price?: string;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  description?: string;
+  price?: number;
+  imageUrl?: string;
+  linkUrl?: string;
+}
+
+export interface Testimonial {
+  id: string;
+  author: string;
+  quote: string;
+  company?: string;
+}
+
+export interface BlogPost {
+  id: string;
+  title: string;
+  content: string;
+  imageUrl?: string;
+  publishedAt: string; // Changed to string to store ISO date
+}
+
+export type DayAvailability = {
+  isOpen: boolean;
+  start: string;
+  end: string;
+};
+
+export type BusinessHours = {
+  monday: DayAvailability;
+  tuesday: DayAvailability;
+  wednesday: DayAvailability;
+  thursday: DayAvailability;
+  friday: DayAvailability;
+  saturday: DayAvailability;
+  sunday: DayAvailability;
+};
+
+export type UserProfile = {
+    id: string;
+    type: ProfileType;
+    username: string;
+    displayName: string;
+    avatar: string;
+    verified: boolean;
+    theme: string;
+    bio: string;
+    template: string;
+    views: number;
+    links: LinkItem[];
+    gallery: GalleryImage[];
+    services: Service[];
+    products: Product[];
+    testimonials: Testimonial[];
+    blogPosts: BlogPost[];
+    businessHours?: BusinessHours;
+};
+
+export interface Template {
+  name: string;
+  component: React.ComponentType<any>;
+  type: ProfileType;
+  image: string;
 }

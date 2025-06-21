@@ -37,524 +37,66 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import {
   BarChart3,
-  Calendar,
+  BookOpen,
+  Briefcase,
+  Camera,
   Check,
   ChevronDown,
+  Clock,
   Edit,
   Eye,
-  Facebook,
-  Github,
-  Globe,
   GripVertical,
-  Instagram,
-  Linkedin,
   Link as LinkIcon,
-  Mail,
   MessageSquare,
-  Mic,
   MousePointer,
+  Package,
   Palette,
-  Pin,
   Plus,
-  BookOpen,
-  Send,
   Smartphone,
-  Focus,
-  CircleFadingPlus,
   Trash2,
   TrendingUp,
-  Twitch,
-  Twitter,
   Upload,
   User,
   Users,
-  Youtube,
-  Music,
-  Rss,
-  Briefcase,
-  ClipboardList,
-  Video,
-  Clapperboard,
-  Podcast,
-  Radio,
-  FileText,
-  Paintbrush,
-  Notebook,
-  Apple,
-  Download,
-  FlaskConical,
-  Camera,
 } from "lucide-react";
-import NeobrutalismTemplate from "@/components/templates/NeobrutalismTemplate";
-import GlassmorphismTemplate from "@/components/templates/GlassmorphismTemplate";
-import Vcard7Template from "@/components/templates/Vcard7Template";
-import ModernTemplate from "@/components/templates/Modern";
-import RichProfileTemplate from "@/components/templates/RichProfileTemplate";
+import {
+  UserProfile,
+  LinkItem,
+  GalleryImage,
+  ProfileType,
+  Service,
+  Product,
+  Testimonial,
+  BlogPost,
+  BusinessHours,
+} from "@/utils/types";
+import { platforms, linkTypes, templates } from "@/lib/constants";
+import BusinessHoursTab from "./_components/business-hours-tab";
 
-// Types
-export interface LinkItem {
-  id: string;
-  title: string;
-  url: string;
-  clicks: number;
-  isActive: boolean;
-  icon?: string;
-  featured?: boolean;
-  thumbnailUrl?: string; // For video thumbnails
-}
+// --- Icon Map ---
+const iconMap: { [key: string]: React.FC<any> } = platforms.reduce(
+  (acc, platform) => {
+    acc[platform.name] = platform.icon;
+    return acc;
+  },
+  {} as { [key: string]: React.FC<any> }
+);
+iconMap["Generic Link"] = LinkIcon;
 
-export interface GalleryImage {
-  id: string;
-  url: string;
-  altText?: string;
-}
-
-export interface UserProfile {
-  id: string;
-  displayName: string;
-  bio: string;
-  avatar: string;
-  username: string;
-  verified: boolean;
-  theme: string;
-  template: string;
-  links: LinkItem[];
-  gallery: GalleryImage[]; // User's image gallery
-  views: number;
-}
-
-export interface Theme {
-  id: string;
-  name: string;
-  gradient: string;
-  bg: string;
-}
-
-// Constants
-export const iconMap: { [key: string]: React.ComponentType<any> } = {
-  globe: Globe,
-  youtube: Youtube,
-  instagram: Instagram,
-  twitter: Twitter,
-  github: Github,
-  mail: Mail,
-  calendar: Calendar,
-  facebook: Facebook,
-  linkedin: Linkedin,
-  tiktok: CircleFadingPlus,
-  pinterest: Pin,
-  snapchat: Focus,
-  reddit: BookOpen,
-  twitch: Twitch,
-  discord: MessageSquare,
-  clubhouse: Mic,
-  telegram: Send,
-  whatsapp: MessageSquare,
-  link: LinkIcon,
-  spotify: Music,
-  applemusic: Music,
-  soundcloud: Music,
-  deezer: Music,
-  pandora: Music,
-  audiomack: Music,
-  medium: BookOpen,
-  substack: BookOpen,
-  wordpress: Rss,
-  blogger: Rss,
-  tumblr: Rss,
-  "contact-form": ClipboardList,
-  calendly: Calendar,
-  "google-forms": ClipboardList,
-  typeform: ClipboardList,
-  jotform: ClipboardList,
-  hubspot: Briefcase,
-  vimeo: Video,
-  reels: Clapperboard,
-  podcast: Podcast,
-  livestream: Radio,
-  resume: FileText,
-  behance: Paintbrush,
-  dribbble: Paintbrush,
-  notion: Notebook,
-  appstore: Apple,
-  playstore: Smartphone,
-  apk: Download,
-  testflight: FlaskConical,
-};
-
-const socialPlatforms = [
-  {
-    name: "Instagram",
-    icon: "instagram",
-    placeholder: "instagram_username",
-    urlPrefix: "https://instagram.com/",
-  },
-  {
-    name: "Twitter (X)",
-    icon: "twitter",
-    placeholder: "twitter_handle",
-    urlPrefix: "https://twitter.com/",
-  },
-  {
-    name: "TikTok",
-    icon: "tiktok",
-    placeholder: "@tiktok_handle",
-    urlPrefix: "https://tiktok.com/",
-  },
-  {
-    name: "YouTube",
-    icon: "youtube",
-    placeholder: "youtube_channel_url",
-    urlPrefix: "",
-  },
-  {
-    name: "Facebook",
-    icon: "facebook",
-    placeholder: "facebook_profile_url",
-    urlPrefix: "",
-  },
-  {
-    name: "LinkedIn",
-    icon: "linkedin",
-    placeholder: "linkedin_profile_url",
-    urlPrefix: "",
-  },
-  {
-    name: "Pinterest",
-    icon: "pinterest",
-    placeholder: "pinterest_username",
-    urlPrefix: "https://pinterest.com/",
-  },
-  {
-    name: "Snapchat",
-    icon: "snapchat",
-    placeholder: "snapchat_username",
-    urlPrefix: "https://snapchat.com/add/",
-  },
-  {
-    name: "Reddit",
-    icon: "reddit",
-    placeholder: "u/reddit_username",
-    urlPrefix: "https://reddit.com/",
-  },
-  {
-    name: "Twitch",
-    icon: "twitch",
-    placeholder: "twitch_channel",
-    urlPrefix: "https://twitch.tv/",
-  },
-  {
-    name: "Discord",
-    icon: "discord",
-    placeholder: "discord_invite_link",
-    urlPrefix: "",
-  },
-  {
-    name: "Telegram",
-    icon: "telegram",
-    placeholder: "telegram_handle",
-    urlPrefix: "https://t.me/",
-  },
-  {
-    name: "WhatsApp",
-    icon: "whatsapp",
-    placeholder: "whatsapp_number_link (e.g., wa.me/1...)",
-    urlPrefix: "https://",
-  },
-];
-
-const musicPlatforms = [
-  {
-    name: "Spotify",
-    icon: "spotify",
-    placeholder: "artist/album/track URL",
-    urlPrefix: "https://open.spotify.com/",
-  },
-  {
-    name: "Apple Music",
-    icon: "applemusic",
-    placeholder: "artist/album/playlist URL",
-    urlPrefix: "https://music.apple.com/",
-  },
-  {
-    name: "SoundCloud",
-    icon: "soundcloud",
-    placeholder: "username",
-    urlPrefix: "https://soundcloud.com/",
-  },
-  {
-    name: "Deezer",
-    icon: "deezer",
-    placeholder: "artist/album/track URL",
-    urlPrefix: "https://www.deezer.com/",
-  },
-  {
-    name: "Pandora",
-    icon: "pandora",
-    placeholder: "artist/station URL",
-    urlPrefix: "https://www.pandora.com/",
-  },
-  {
-    name: "Audiomack",
-    icon: "audiomack",
-    placeholder: "artist/song/album URL",
-    urlPrefix: "https://audiomack.com/",
-  },
-];
-
-const blogPlatforms = [
-  {
-    name: "Personal Website",
-    icon: "globe",
-    placeholder: "yourwebsite.com",
-    urlPrefix: "https://",
-  },
-  {
-    name: "Medium",
-    icon: "medium",
-    placeholder: "@username or publication",
-    urlPrefix: "https://medium.com/",
-  },
-  {
-    name: "Substack",
-    icon: "substack",
-    placeholder: "username.substack.com",
-    urlPrefix: "https://",
-  },
-  {
-    name: "WordPress",
-    icon: "wordpress",
-    placeholder: "yourblog.wordpress.com",
-    urlPrefix: "https://",
-  },
-  {
-    name: "Blogger",
-    icon: "blogger",
-    placeholder: "yourblog.blogspot.com",
-    urlPrefix: "https://",
-  },
-  {
-    name: "Tumblr",
-    icon: "tumblr",
-    placeholder: "username.tumblr.com",
-    urlPrefix: "https://",
-  },
-];
-
-const videoPlatforms = [
-  {
-    name: "YouTube",
-    icon: "youtube",
-    placeholder: "channel_url or video_url",
-    urlPrefix: "https://youtube.com/",
-  },
-  {
-    name: "Vimeo",
-    icon: "vimeo",
-    placeholder: "vimeo.com/username",
-    urlPrefix: "https://",
-  },
-  {
-    name: "TikTok",
-    icon: "tiktok",
-    placeholder: "@username",
-    urlPrefix: "https://tiktok.com/",
-  },
-  {
-    name: "Reels/Shorts",
-    icon: "reels",
-    placeholder: "instagram.com/reel/...",
-    urlPrefix: "https://",
-  },
-  {
-    name: "Podcast",
-    icon: "podcast",
-    placeholder: "podcast_url (Apple, Spotify)",
-    urlPrefix: "https://",
-  },
-  {
-    name: "Live Stream",
-    icon: "livestream",
-    placeholder: "twitch.tv/ or youtube.com/live/..",
-    urlPrefix: "https://",
-  },
-];
-
-const professionalPlatforms = [
-  {
-    name: "LinkedIn",
-    icon: "linkedin",
-    placeholder: "linkedin.com/in/username",
-    urlPrefix: "https://",
-  },
-  {
-    name: "Resume/CV",
-    icon: "resume",
-    placeholder: "Link to your PDF",
-    urlPrefix: "https://",
-  },
-  {
-    name: "Behance",
-    icon: "behance",
-    placeholder: "behance.net/username",
-    urlPrefix: "https://",
-  },
-  {
-    name: "Dribbble",
-    icon: "dribbble",
-    placeholder: "dribbble.com/username",
-    urlPrefix: "https://",
-  },
-  {
-    name: "GitHub",
-    icon: "github",
-    placeholder: "github.com/username",
-    urlPrefix: "https://",
-  },
-  {
-    name: "Notion",
-    icon: "notion",
-    placeholder: "your-page.notion.site",
-    urlPrefix: "https://",
-  },
-];
-
-const appPlatforms = [
-  {
-    name: "App Store",
-    icon: "appstore",
-    placeholder: "apps.apple.com/...",
-    urlPrefix: "https://",
-  },
-  {
-    name: "Google Play",
-    icon: "playstore",
-    placeholder: "play.google.com/store/...",
-    urlPrefix: "https://",
-  },
-  {
-    name: "APK Download",
-    icon: "apk",
-    placeholder: "Link to your .apk file",
-    urlPrefix: "https://",
-  },
-  {
-    name: "TestFlight",
-    icon: "testflight",
-    placeholder: "testflight.apple.com/join/...",
-    urlPrefix: "https://",
-  },
-];
-
-const contactPlatforms = [
-  {
-    name: "Email",
-    icon: "mail",
-    placeholder: "your@email.com",
-    urlPrefix: "mailto:",
-  },
-  {
-    name: "Calendly",
-    icon: "calendly",
-    placeholder: "calendly.com/your-name",
-    urlPrefix: "https://",
-  },
-  {
-    name: "Contact Form",
-    icon: "contact-form",
-    placeholder: "yourwebsite.com/contact",
-    urlPrefix: "https://",
-  },
-  {
-    name: "Google Forms",
-    icon: "google-forms",
-    placeholder: "docs.google.com/forms/...",
-    urlPrefix: "https://",
-  },
-  {
-    name: "Typeform",
-    icon: "typeform",
-    placeholder: "form.typeform.com/...",
-    urlPrefix: "https://",
-  },
-  {
-    name: "JotForm",
-    icon: "jotform",
-    placeholder: "form.jotform.com/...",
-    urlPrefix: "https://",
-  },
-  {
-    name: "HubSpot",
-    icon: "hubspot",
-    placeholder: "meetings.hubspot.com/...",
-    urlPrefix: "https://",
-  },
-];
-
-export const themes: Theme[] = [
-  {
-    id: "default",
-    name: "Default",
-    gradient: "from-teal-400 to-purple-500",
-    bg: "bg-slate-900",
-  },
-  {
-    id: "ocean",
-    name: "Ocean",
-    gradient: "from-blue-500 to-cyan-500",
-    bg: "bg-blue-900",
-  },
-  {
-    id: "sunset",
-    name: "Sunset",
-    gradient: "from-orange-500 to-pink-500",
-    bg: "bg-orange-900",
-  },
-  {
-    id: "forest",
-    name: "Forest",
-    gradient: "from-green-500 to-lime-500",
-    bg: "bg-green-900",
-  },
-];
-
-const templates = [
-  {
-    id: "neobrutalism",
-    name: "Neo-Brutalism",
-    component: NeobrutalismTemplate,
-    thumbnail:
-      "https://raw.githubusercontent.com/Abelokoh/vlink/main/public/templates/neobrutalism.png",
-  },
-  {
-    id: "glassmorphism",
-    name: "Glassmorphism",
-    component: GlassmorphismTemplate,
-    thumbnail:
-      "https://raw.githubusercontent.com/Abelokoh/vlink/main/public/templates/glassmorphism.png", // Placeholder
-  },
-  {
-    id: "vcard7",
-    name: "Modern vCard",
-    component: Vcard7Template,
-    thumbnail:
-      "https://raw.githubusercontent.com/Abelokoh/vlink/main/public/templates/vcard.png", // Placeholder
-  },
-  {
-    id: "modern",
-    name: "Modern",
-    component: ModernTemplate,
-    thumbnail:
-      "https://raw.githubusercontent.com/Abelokoh/vlink/main/public/templates/modern.png", // Placeholder
-  },
-  {
-    id: "rich-profile",
-    name: "Rich Profile",
-    component: RichProfileTemplate,
-    thumbnail:
-      "https://raw.githubusercontent.com/Abelokoh/vlink/main/public/templates/rich-profile.png", // Placeholder
-  },
-];
+// --- Platform Groups ---
+const socialPlatforms =
+  linkTypes.find((lt) => lt.title === "Social")?.links || [];
+const musicPlatforms =
+  linkTypes.find((lt) => lt.title === "Music & Podcasts")?.links || [];
+const videoPlatforms =
+  linkTypes.find((lt) => lt.title === "Video")?.links || [];
+const professionalPlatforms =
+  linkTypes.find((lt) => lt.title === "Professional")?.links || [];
+const blogPlatforms = linkTypes.find((lt) => lt.title === "Blog")?.links || [];
+const contactPlatforms =
+  linkTypes.find((lt) => lt.title === "Contact")?.links || [];
+const appPlatforms =
+  linkTypes.find((lt) => lt.title === "App Stores")?.links || [];
 
 // --- Helper Functions ---
 const getYouTubeThumbnail = (url: string) => {
@@ -577,10 +119,22 @@ const getYouTubeThumbnail = (url: string) => {
   }
 };
 
+// --- Default Data ---
+const defaultBusinessHours: BusinessHours = {
+  monday: { isOpen: true, start: "09:00", end: "17:00" },
+  tuesday: { isOpen: true, start: "09:00", end: "17:00" },
+  wednesday: { isOpen: true, start: "09:00", end: "17:00" },
+  thursday: { isOpen: true, start: "09:00", end: "17:00" },
+  friday: { isOpen: true, start: "09:00", end: "17:00" },
+  saturday: { isOpen: false, start: "", end: "" },
+  sunday: { isOpen: false, start: "", end: "" },
+};
+
 // --- MOCK DATA (In a real app, this would come from an API) ---
 const initialProfiles: UserProfile[] = [
   {
     id: "1",
+    type: "VCARD", // <-- Profile type
     displayName: "Abelly Baba",
     username: "abellybaba",
     bio: "Full-stack developer and content creator. 🚀",
@@ -589,6 +143,11 @@ const initialProfiles: UserProfile[] = [
     theme: "ocean",
     template: "neobrutalism",
     views: 10450,
+    services: [],
+    products: [],
+    testimonials: [],
+    businessHours: defaultBusinessHours,
+    blogPosts: [],
     gallery: [
       {
         id: "g1",
@@ -624,6 +183,7 @@ const initialProfiles: UserProfile[] = [
   },
   {
     id: "2",
+    type: "VLINK", // <-- Profile type
     displayName: "My Side Hustle",
     username: "sidehustle",
     bio: "A fun project I'm working on in my spare time.",
@@ -643,6 +203,11 @@ const initialProfiles: UserProfile[] = [
         icon: "link",
       },
     ],
+    services: [],
+    products: [],
+    testimonials: [],
+    businessHours: undefined,
+    blogPosts: [],
   },
 ];
 
@@ -704,12 +269,16 @@ function LinksTab({
   onReorderLinks,
 }: {
   links: LinkItem[];
-  onAddLink: (link: Omit<LinkItem, "id" | "clicks" | "isActive">) => void;
+  onAddLink: (link: Omit<LinkItem, "id" | "isActive">) => void;
   onUpdateLink: (id: string, updates: Partial<LinkItem>) => void;
   onDeleteLink: (id: string) => void;
   onReorderLinks: (reorderedLinks: LinkItem[]) => void;
 }) {
-  const [newLink, setNewLink] = useState({ title: "", url: "", icon: "link" });
+  const [newLink, setNewLink] = useState({
+    title: "",
+    url: "",
+    icon: "Generic Link",
+  });
   const [editingLink, setEditingLink] = useState<LinkItem | null>(null);
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   const [selectedSocial, setSelectedSocial] = useState<any>(null);
@@ -719,22 +288,23 @@ function LinksTab({
 
   const handleAddCustomLink = () => {
     if (newLink.title && newLink.url) {
-      onAddLink({ ...newLink, featured: false });
-      setNewLink({ title: "", url: "", icon: "link" });
+      onAddLink({ ...newLink, featured: false, clicks: 0 });
+      setNewLink({ title: "", url: "", icon: "Generic Link" });
     }
   };
 
   const handleAddSocialLink = () => {
     if (!selectedSocial || !socialInputValue) return;
-    const url = selectedSocial.urlPrefix
-      ? `${selectedSocial.urlPrefix}${socialInputValue}`
-      : socialInputValue;
+    const url = selectedSocial.placeholder.startsWith("http")
+      ? socialInputValue
+      : `${selectedSocial.placeholder}${socialInputValue}`;
 
-    const newLinkPayload: Omit<LinkItem, "id" | "clicks" | "isActive"> = {
+    const newLinkPayload: Omit<LinkItem, "id" | "isActive"> = {
       title: selectedSocial.name,
       url,
-      icon: selectedSocial.icon,
+      icon: selectedSocial.name, // Use name as icon identifier
       featured: false,
+      clicks: 0,
     };
 
     // If it's a video link, try to get a thumbnail
@@ -781,14 +351,16 @@ function LinksTab({
     return <Icon className="w-5 h-5 text-muted-foreground" />;
   };
 
-  const addedSocialIcons = links.map((link) => link.icon);
+  const addedSocialIcons = links
+    .map((link) => link.icon)
+    .filter(Boolean) as string[];
 
   const renderPlatformGrid = (platforms: any[]) => {
     return (
       <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-7 gap-4">
         {platforms.map((platform) => {
-          const isAdded = addedSocialIcons.includes(platform.icon);
-          const IconComponent = iconMap[platform.icon];
+          const isAdded = addedSocialIcons.includes(platform.name);
+          const IconComponent = platform.icon;
           return (
             <button
               key={platform.name}
@@ -926,7 +498,7 @@ function LinksTab({
                 >
                   {Object.keys(iconMap).map((key) => (
                     <option key={key} value={key}>
-                      {key.charAt(0).toUpperCase() + key.slice(1)}
+                      {key}
                     </option>
                   ))}
                 </select>
@@ -956,12 +528,16 @@ function LinksTab({
                 <div className="flex items-center">
                   {selectedSocial.urlPrefix && (
                     <span className="text-muted-foreground text-sm px-3 py-2 bg-muted rounded-l-md border border-r-0">
-                      {selectedSocial.urlPrefix.replace("https://", "")}
+                      {selectedSocial.placeholder}
                     </span>
                   )}
                   <Input
                     id="social-input"
-                    placeholder={selectedSocial.placeholder}
+                    placeholder={
+                      selectedSocial.placeholder.includes("username")
+                        ? "username"
+                        : "your-id"
+                    }
                     value={socialInputValue}
                     onChange={(e) => setSocialInputValue(e.target.value)}
                     className={selectedSocial.urlPrefix ? "rounded-l-none" : ""}
@@ -1144,8 +720,8 @@ const AppearanceTab = ({
   profile: UserProfile;
   onUpdateProfile: (updates: Partial<UserProfile>) => void;
 }) => {
-  const handleTemplateChange = (templateId: string) => {
-    onUpdateProfile({ template: templateId });
+  const handleTemplateChange = (templateName: string) => {
+    onUpdateProfile({ template: templateName });
   };
 
   return (
@@ -1162,23 +738,23 @@ const AppearanceTab = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {templates.map((template) => (
               <div
-                key={template.id}
+                key={template.name}
                 className="cursor-pointer group"
-                onClick={() => handleTemplateChange(template.id)}
+                onClick={() => handleTemplateChange(template.name)}
               >
                 <div
                   className={`relative rounded-lg overflow-hidden border-2 transition-all ${
-                    profile.template === template.id
+                    profile.template === template.name
                       ? "border-primary shadow-2xl"
                       : "border-muted group-hover:border-accent-foreground"
                   }`}
                 >
                   <img
-                    src={template.thumbnail}
+                    src={template.image}
                     alt={template.name}
                     className="w-full h-auto object-cover transition-transform group-hover:scale-105"
                   />
-                  {profile.template === template.id && (
+                  {profile.template === template.name && (
                     <div className="absolute top-3 right-3 bg-primary text-primary-foreground rounded-full p-1.5 shadow-lg">
                       <Check className="w-5 h-5" />
                     </div>
@@ -1266,6 +842,450 @@ const GalleryTab = ({
   );
 };
 
+// --- NEW VCARD TABS ---
+
+const ServicesTab = ({
+  services,
+  onUpdate,
+}: {
+  services: Service[];
+  onUpdate: (services: Service[]) => void;
+}) => {
+  // Basic state and handlers for a controlled form
+  const [newService, setNewService] = useState({
+    title: "",
+    description: "",
+    price: "",
+  });
+
+  const handleAddService = () => {
+    if (!newService.title) return;
+    const serviceToAdd: Service = { ...newService, id: Date.now().toString() };
+    onUpdate([...services, serviceToAdd]);
+    setNewService({ title: "", description: "", price: "" });
+  };
+
+  const handleDelete = (id: string) => {
+    onUpdate(services.filter((s: Service) => s.id !== id));
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Manage Services</CardTitle>
+        <CardDescription>
+          Add, edit, or remove the services you offer.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="space-y-4 p-4 border rounded-lg">
+          <h4 className="font-medium">Add New Service</h4>
+          <Input
+            placeholder="Service Title (e.g., Web Design)"
+            value={newService.title}
+            onChange={(e) =>
+              setNewService({ ...newService, title: e.target.value })
+            }
+          />
+          <Textarea
+            placeholder="Brief description..."
+            value={newService.description}
+            onChange={(e) =>
+              setNewService({ ...newService, description: e.target.value })
+            }
+          />
+          <Input
+            placeholder="Price (e.g., $50/hr, Contact for quote)"
+            value={newService.price}
+            onChange={(e) =>
+              setNewService({ ...newService, price: e.target.value })
+            }
+          />
+          <Button onClick={handleAddService}>
+            <Plus className="w-4 h-4 mr-2" /> Add Service
+          </Button>
+        </div>
+        <div className="space-y-4">
+          {services.map((service: Service) => (
+            <div
+              key={service.id}
+              className="flex items-center justify-between p-3 border rounded-lg bg-muted/50"
+            >
+              <div>
+                <p className="font-semibold">{service.title}</p>
+                <p className="text-sm text-muted-foreground">
+                  {service.description}
+                </p>
+                <p className="text-sm font-bold">{service.price}</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDelete(service.id)}
+              >
+                <Trash2 className="w-4 h-4 text-destructive" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+const ProductsTab = ({
+  products,
+  onUpdate,
+}: {
+  products: Product[];
+  onUpdate: (products: Product[]) => void;
+}) => {
+  const [newProduct, setNewProduct] = useState({
+    name: "",
+    description: "",
+    price: "",
+    imageUrl: "",
+    linkUrl: "",
+  });
+
+  const handleAddProduct = () => {
+    if (!newProduct.name || !newProduct.price) return; // Basic validation
+    const productToAdd: Product = {
+      ...newProduct,
+      id: Date.now().toString(),
+      price: parseFloat(newProduct.price) || 0, // Convert price to number
+    };
+    onUpdate([...products, productToAdd]);
+    setNewProduct({
+      name: "",
+      description: "",
+      price: "",
+      imageUrl: "",
+      linkUrl: "",
+    }); // Reset form
+  };
+
+  const handleDelete = (id: string) => {
+    onUpdate(products.filter((p) => p.id !== id));
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Manage Products</CardTitle>
+        <CardDescription>
+          Showcase products you sell or recommend.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-8">
+        {/* Form to add new product */}
+        <div className="space-y-4 p-4 border rounded-lg">
+          <h4 className="font-medium">Add New Product</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              placeholder="Product Name"
+              value={newProduct.name}
+              onChange={(e) =>
+                setNewProduct({ ...newProduct, name: e.target.value })
+              }
+            />
+            <Input
+              placeholder="Price (e.g., 29.99)"
+              type="number"
+              value={newProduct.price}
+              onChange={(e) =>
+                setNewProduct({ ...newProduct, price: e.target.value })
+              }
+            />
+          </div>
+          <Textarea
+            placeholder="Brief product description..."
+            value={newProduct.description}
+            onChange={(e) =>
+              setNewProduct({ ...newProduct, description: e.target.value })
+            }
+          />
+          <Input
+            placeholder="Image URL (optional)"
+            value={newProduct.imageUrl}
+            onChange={(e) =>
+              setNewProduct({ ...newProduct, imageUrl: e.target.value })
+            }
+          />
+          <Input
+            placeholder="Link to product page (optional)"
+            value={newProduct.linkUrl}
+            onChange={(e) =>
+              setNewProduct({ ...newProduct, linkUrl: e.target.value })
+            }
+          />
+          <Button onClick={handleAddProduct}>
+            <Plus className="w-4 h-4 mr-2" /> Add Product
+          </Button>
+        </div>
+
+        {/* List of existing products */}
+        <div className="space-y-4">
+          {products.map((product) => (
+            <div
+              key={product.id}
+              className="flex items-start gap-4 p-3 border rounded-lg bg-muted/50"
+            >
+              {product.imageUrl && (
+                <img
+                  src={product.imageUrl}
+                  alt={product.name}
+                  className="w-20 h-20 object-cover rounded-md bg-gray-200"
+                />
+              )}
+              <div className="flex-1">
+                <h5 className="font-semibold">{product.name}</h5>
+                <p className="text-sm text-muted-foreground">
+                  {product.description}
+                </p>
+                {product.price && (
+                  <p className="text-sm font-bold mt-1">
+                    ${product.price.toFixed(2)}
+                  </p>
+                )}
+                {product.linkUrl && (
+                  <a
+                    href={product.linkUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-primary hover:underline"
+                  >
+                    View Product
+                  </a>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDelete(product.id)}
+              >
+                <Trash2 className="w-4 h-4 text-destructive" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+const TestimonialsTab = ({
+  testimonials,
+  onUpdate,
+}: {
+  testimonials: Testimonial[];
+  onUpdate: (testimonials: Testimonial[]) => void;
+}) => {
+  const [newTestimonial, setNewTestimonial] = useState({
+    quote: "",
+    author: "",
+    company: "",
+  });
+
+  const handleAddTestimonial = () => {
+    if (!newTestimonial.quote || !newTestimonial.author) return; // Basic validation
+    const testimonialToAdd: Testimonial = {
+      ...newTestimonial,
+      id: Date.now().toString(),
+    };
+    onUpdate([...testimonials, testimonialToAdd]);
+    setNewTestimonial({ quote: "", author: "", company: "" }); // Reset form
+  };
+
+  const handleDelete = (id: string) => {
+    onUpdate(testimonials.filter((t) => t.id !== id));
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Manage Testimonials</CardTitle>
+        <CardDescription>
+          Display quotes from happy clients or customers.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-8">
+        {/* Form to add new testimonial */}
+        <div className="space-y-4 p-4 border rounded-lg">
+          <h4 className="font-medium">Add New Testimonial</h4>
+          <Textarea
+            placeholder='"The best service I have ever received!"'
+            value={newTestimonial.quote}
+            onChange={(e) =>
+              setNewTestimonial({ ...newTestimonial, quote: e.target.value })
+            }
+            rows={3}
+          />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Input
+              placeholder="Author's Name (e.g., Jane Doe)"
+              value={newTestimonial.author}
+              onChange={(e) =>
+                setNewTestimonial({
+                  ...newTestimonial,
+                  author: e.target.value,
+                })
+              }
+            />
+            <Input
+              placeholder="Company (e.g., Acme Inc.)"
+              value={newTestimonial.company}
+              onChange={(e) =>
+                setNewTestimonial({
+                  ...newTestimonial,
+                  company: e.target.value,
+                })
+              }
+            />
+          </div>
+          <Button onClick={handleAddTestimonial}>
+            <Plus className="w-4 h-4 mr-2" /> Add Testimonial
+          </Button>
+        </div>
+
+        {/* List of existing testimonials */}
+        <div className="space-y-4">
+          {testimonials.map((testimonial) => (
+            <div
+              key={testimonial.id}
+              className="flex items-start gap-4 p-4 border rounded-lg bg-muted/50"
+            >
+              <div className="flex-1">
+                <blockquote className="italic text-base border-l-4 pl-4">
+                  {testimonial.quote}
+                </blockquote>
+                <p className="text-right font-semibold mt-2">
+                  &mdash; {testimonial.author}
+                </p>
+                {testimonial.company && (
+                  <p className="text-right text-sm text-muted-foreground">
+                    {testimonial.company}
+                  </p>
+                )}
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDelete(testimonial.id)}
+              >
+                <Trash2 className="w-4 h-4 text-destructive" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
+const BlogTab = ({
+  blogPosts,
+  onUpdate,
+}: {
+  blogPosts: BlogPost[];
+  onUpdate: (blogPosts: BlogPost[]) => void;
+}) => {
+  const [newPost, setNewPost] = useState({
+    title: "",
+    content: "",
+    imageUrl: "",
+  });
+
+  const handleAddPost = () => {
+    if (!newPost.title || !newPost.content) return; // Basic validation
+    const postToAdd: BlogPost = {
+      ...newPost,
+      id: Date.now().toString(),
+      publishedAt: new Date().toISOString(),
+    };
+    onUpdate([...blogPosts, postToAdd]);
+    setNewPost({ title: "", content: "", imageUrl: "" }); // Reset form
+  };
+
+  const handleDelete = (id: string) => {
+    onUpdate(blogPosts.filter((p) => p.id !== id));
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Manage Blog Posts</CardTitle>
+        <CardDescription>
+          Write and publish articles directly to your vCard.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-8">
+        {/* Form to add new post */}
+        <div className="space-y-4 p-4 border rounded-lg">
+          <h4 className="font-medium">Create New Post</h4>
+          <Input
+            placeholder="Post Title"
+            value={newPost.title}
+            onChange={(e) => setNewPost({ ...newPost, title: e.target.value })}
+          />
+          <Textarea
+            placeholder="Write your content here..."
+            value={newPost.content}
+            onChange={(e) =>
+              setNewPost({ ...newPost, content: e.target.value })
+            }
+            rows={5}
+          />
+          <Input
+            placeholder="Image URL (optional)"
+            value={newPost.imageUrl}
+            onChange={(e) =>
+              setNewPost({ ...newPost, imageUrl: e.target.value })
+            }
+          />
+          <Button onClick={handleAddPost}>
+            <Plus className="w-4 h-4 mr-2" /> Publish Post
+          </Button>
+        </div>
+
+        {/* List of existing posts */}
+        <div className="space-y-4">
+          {blogPosts.map((post) => (
+            <div
+              key={post.id}
+              className="flex items-start gap-4 p-4 border rounded-lg bg-muted/50"
+            >
+              {post.imageUrl && (
+                <img
+                  src={post.imageUrl}
+                  alt={post.title}
+                  className="w-24 h-24 object-cover rounded-md bg-gray-200"
+                />
+              )}
+              <div className="flex-1">
+                <h5 className="font-semibold">{post.title}</h5>
+                <p className="text-sm text-muted-foreground truncate-2-lines">
+                  {post.content}
+                </p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  {new Date(post.publishedAt).toLocaleDateString()}
+                </p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => handleDelete(post.id)}
+              >
+                <Trash2 className="w-4 h-4 text-destructive" />
+              </Button>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 const AnalyticsTab = () => {
   return (
     <Card>
@@ -1287,7 +1307,7 @@ const AnalyticsTab = () => {
 
 const LivePreview = ({ profile }: { profile: UserProfile }) => {
   const TemplateComponent = templates.find(
-    (t) => t.id === profile.template
+    (t) => t.name === profile.template
   )?.component;
 
   if (!TemplateComponent) {
@@ -1299,10 +1319,9 @@ const LivePreview = ({ profile }: { profile: UserProfile }) => {
   }
 
   return (
-    <div className="sticky top-8 w-full h-full bg-gray-100 dark:bg-gray-900/50 rounded-lg p-4 overflow-hidden border border-gray-200 dark:border-gray-700 shadow-lg">
-      <div className="relative w-full h-full">
-        {/* Phone Mockup */}
-        <div className="relative mx-auto border-gray-800 dark:border-gray-600 bg-gray-800 border-[12px] rounded-[2.5rem] h-[700px] w-[350px] shadow-2xl">
+    <div className="w-full overflow-x-auto">
+      <div className="flex justify-center min-w-[370px]">
+        <div className="relative border-gray-800 dark:border-gray-600 bg-gray-800 border-[12px] rounded-[2.5rem] h-[700px] w-[350px] shadow-2xl">
           <div className="w-[148px] h-[18px] bg-gray-800 top-0 rounded-b-[1rem] left-1/2 -translate-x-1/2 absolute"></div>
           <div className="h-[46px] w-[3px] bg-gray-800 absolute -left-[15px] top-[124px] rounded-l-lg"></div>
           <div className="h-[46px] w-[3px] bg-gray-800 absolute -left-[15px] top-[178px] rounded-l-lg"></div>
@@ -1325,6 +1344,9 @@ export default function DashboardPage() {
   const [activeProfileId, setActiveProfileId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newProfileUsername, setNewProfileUsername] = useState("");
+  const [newProfileType, setNewProfileType] = useState<ProfileType | null>(
+    null
+  );
 
   // Load profiles from local storage on initial render
   useEffect(() => {
@@ -1390,39 +1412,60 @@ export default function DashboardPage() {
   };
 
   const handleCreateNewProfile = () => {
-    if (newProfileUsername.trim()) {
+    if (newProfileUsername.trim() && newProfileType) {
       const newProfile: UserProfile = {
         id: Date.now().toString(),
+        type: newProfileType,
         username: newProfileUsername,
         displayName: newProfileUsername,
-        bio: "A new vLink profile!",
+        bio: `A new ${newProfileType === "VLINK" ? "vLink" : "vCard"} profile!`,
         avatar: `https://avatar.vercel.sh/${newProfileUsername}.png`,
         verified: false,
         theme: "default",
-        template: "neobrutalism",
+        template: newProfileType === "VLINK" ? "rich-profile" : "vcard7",
         links: [],
-        gallery: [], // Initialize with empty gallery
+        gallery: [],
         views: 0,
+        // Initialize vCard fields
+        services: [],
+        products: [],
+        testimonials: [],
+        businessHours:
+          newProfileType === "VCARD" ? defaultBusinessHours : undefined,
+        blogPosts: [],
       };
       const newProfiles = [...profiles, newProfile];
       setProfiles(newProfiles);
       setActiveProfileId(newProfile.id);
       setNewProfileUsername("");
+      setNewProfileType(null); // Reset the type selection
       setIsModalOpen(false);
     }
   };
 
+  const handleUpdateProfile = (updates: Partial<UserProfile>) => {
+    if (!activeProfile) return;
+    const updatedProfile = { ...activeProfile, ...updates };
+    const newProfiles = profiles.map((p) =>
+      p.id === activeProfileId ? updatedProfile : p
+    );
+    setProfiles(newProfiles);
+  };
+
   const handleAddLink = (
-    newLink: Omit<LinkItem, "id" | "clicks" | "isActive">
+    link: Omit<LinkItem, "id" | "clicks" | "isActive">
   ) => {
     if (!activeProfile) return;
-    const linkToAdd: LinkItem = {
-      ...newLink,
+
+    const newLink: LinkItem = {
+      ...link,
       id: Date.now().toString(),
       clicks: 0,
       isActive: true,
     };
-    handleUpdateActiveProfile({ links: [...activeProfile.links, linkToAdd] });
+
+    const updatedLinks = [...activeProfile.links, newLink];
+    handleUpdateProfile({ links: updatedLinks });
   };
 
   const handleUpdateLink = (id: string, updates: Partial<LinkItem>) => {
@@ -1456,24 +1499,65 @@ export default function DashboardPage() {
               <Button size="lg">Create Your First Profile</Button>
             </DialogTrigger>
             <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Create a new profile</DialogTitle>
-                <DialogDescription>
-                  Enter a username for your new vLink profile.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <Label htmlFor="username">Username</Label>
-                <Input
-                  id="username"
-                  value={newProfileUsername}
-                  onChange={(e) => setNewProfileUsername(e.target.value)}
-                  placeholder="e.g., yourname"
-                />
-                <Button onClick={handleCreateNewProfile} className="w-full">
-                  Create Profile
-                </Button>
-              </div>
+              {!newProfileType ? (
+                <>
+                  <DialogHeader>
+                    <DialogTitle>What would you like to create?</DialogTitle>
+                    <DialogDescription>
+                      Choose a simple link page or a full-featured digital
+                      business card.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-6">
+                    <div
+                      className="p-6 border rounded-lg flex flex-col items-center text-center gap-4 hover:bg-accent transition-colors cursor-pointer"
+                      onClick={() => setNewProfileType("VLINK")}
+                    >
+                      <LinkIcon className="w-10 h-10" />
+                      <h3 className="font-semibold">vLink</h3>
+                      <p className="text-sm text-muted-foreground">
+                        A simple, stylish page to host all your important links.
+                      </p>
+                    </div>
+                    <div
+                      className="p-6 border rounded-lg flex flex-col items-center text-center gap-4 hover:bg-accent transition-colors cursor-pointer"
+                      onClick={() => setNewProfileType("VCARD")}
+                    >
+                      <Users className="w-10 h-10" />
+                      <h3 className="font-semibold">vCard</h3>
+                      <p className="text-sm text-muted-foreground">
+                        A professional mini-website with services, products, and
+                        more.
+                      </p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <DialogHeader>
+                    <DialogTitle>
+                      Create a new{" "}
+                      {newProfileType === "VLINK" ? "vLink" : "vCard"}
+                    </DialogTitle>
+                    <DialogDescription>
+                      Enter a username for your new profile. This will be part
+                      of its public URL.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4">
+                    <Label htmlFor="username">Username</Label>
+                    <Input
+                      id="username"
+                      value={newProfileUsername}
+                      onChange={(e) => setNewProfileUsername(e.target.value)}
+                      placeholder="e.g., yourname"
+                    />
+                    <Button onClick={handleCreateNewProfile} className="w-full">
+                      Create Profile
+                    </Button>
+                  </div>
+                </>
+              )}
             </DialogContent>
           </Dialog>
         </div>
@@ -1535,24 +1619,73 @@ export default function DashboardPage() {
                   </DropdownMenuItem>
                 </DialogTrigger>
                 <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Create a new profile</DialogTitle>
-                    <DialogDescription>
-                      Enter a username for your new vLink profile.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <Label htmlFor="username">Username</Label>
-                    <Input
-                      id="username"
-                      value={newProfileUsername}
-                      onChange={(e) => setNewProfileUsername(e.target.value)}
-                      placeholder="e.g., yourname"
-                    />
-                    <Button onClick={handleCreateNewProfile} className="w-full">
-                      Create Profile
-                    </Button>
-                  </div>
+                  {!newProfileType ? (
+                    <>
+                      <DialogHeader>
+                        <DialogTitle>
+                          What would you like to create?
+                        </DialogTitle>
+                        <DialogDescription>
+                          Choose a simple link page or a full-featured digital
+                          business card.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-6">
+                        <div
+                          className="p-6 border rounded-lg flex flex-col items-center text-center gap-4 hover:bg-accent transition-colors cursor-pointer"
+                          onClick={() => setNewProfileType("VLINK")}
+                        >
+                          <LinkIcon className="w-10 h-10" />
+                          <h3 className="font-semibold">vLink</h3>
+                          <p className="text-sm text-muted-foreground">
+                            A simple, stylish page to host all your important
+                            links.
+                          </p>
+                        </div>
+                        <div
+                          className="p-6 border rounded-lg flex flex-col items-center text-center gap-4 hover:bg-accent transition-colors cursor-pointer"
+                          onClick={() => setNewProfileType("VCARD")}
+                        >
+                          <Users className="w-10 h-10" />
+                          <h3 className="font-semibold">vCard</h3>
+                          <p className="text-sm text-muted-foreground">
+                            A professional mini-website with services, products,
+                            and more.
+                          </p>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <DialogHeader>
+                        <DialogTitle>
+                          Create a new{" "}
+                          {newProfileType === "VLINK" ? "vLink" : "vCard"}
+                        </DialogTitle>
+                        <DialogDescription>
+                          Enter a username for your new profile. This will be
+                          part of its public URL.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <Label htmlFor="username">Username</Label>
+                        <Input
+                          id="username"
+                          value={newProfileUsername}
+                          onChange={(e) =>
+                            setNewProfileUsername(e.target.value)
+                          }
+                          placeholder="e.g., yourname"
+                        />
+                        <Button
+                          onClick={handleCreateNewProfile}
+                          className="w-full"
+                        >
+                          Create Profile
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </DialogContent>
               </Dialog>
             </DropdownMenuContent>
@@ -1595,6 +1728,32 @@ export default function DashboardPage() {
                     <BarChart3 className="mr-2 h-4 w-4" />
                     Analytics
                   </TabsTrigger>
+
+                  {/* --- DYNAMIC VCARD TABS --- */}
+                  {activeProfile.type === "VCARD" && (
+                    <>
+                      <TabsTrigger value="services">
+                        <Briefcase className="mr-2 h-4 w-4" />
+                        Services
+                      </TabsTrigger>
+                      <TabsTrigger value="products">
+                        <Package className="mr-2 h-4 w-4" />
+                        Products
+                      </TabsTrigger>
+                      <TabsTrigger value="testimonials">
+                        <MessageSquare className="mr-2 h-4 w-4" />
+                        Testimonials
+                      </TabsTrigger>
+                      <TabsTrigger value="blog">
+                        <BookOpen className="mr-2 h-4 w-4" />
+                        Blog
+                      </TabsTrigger>
+                      <TabsTrigger value="hours">
+                        <Clock className="mr-2 h-4 w-4" />
+                        Hours
+                      </TabsTrigger>
+                    </>
+                  )}
                 </TabsList>
               </div>
 
@@ -1634,6 +1793,58 @@ export default function DashboardPage() {
               <TabsContent value="analytics" className="pt-6">
                 <AnalyticsTab />
               </TabsContent>
+
+              {/* --- DYNAMIC VCARD TABS CONTENT --- */}
+              {activeProfile.type === "VCARD" && (
+                <>
+                  <TabsContent value="services" className="pt-6">
+                    <ServicesTab
+                      services={activeProfile.services || []}
+                      onUpdate={(newServices) =>
+                        handleUpdateActiveProfile({ services: newServices })
+                      }
+                    />
+                  </TabsContent>
+                  <TabsContent value="products" className="pt-6">
+                    <ProductsTab
+                      products={activeProfile.products || []}
+                      onUpdate={(newProducts) =>
+                        handleUpdateActiveProfile({ products: newProducts })
+                      }
+                    />
+                  </TabsContent>
+                  <TabsContent value="testimonials" className="pt-6">
+                    <TestimonialsTab
+                      testimonials={activeProfile.testimonials || []}
+                      onUpdate={(newTestimonials) =>
+                        handleUpdateActiveProfile({
+                          testimonials: newTestimonials,
+                        })
+                      }
+                    />
+                  </TabsContent>
+                  <TabsContent value="blog" className="pt-6">
+                    <BlogTab
+                      blogPosts={activeProfile.blogPosts || []}
+                      onUpdate={(newBlogPosts) =>
+                        handleUpdateActiveProfile({ blogPosts: newBlogPosts })
+                      }
+                    />
+                  </TabsContent>
+                  <TabsContent value="hours" className="pt-6">
+                    <BusinessHoursTab
+                      initialBusinessHours={
+                        activeProfile.businessHours || defaultBusinessHours
+                      }
+                      onSave={(newBusinessHours) =>
+                        handleUpdateActiveProfile({
+                          businessHours: newBusinessHours,
+                        })
+                      }
+                    />
+                  </TabsContent>
+                </>
+              )}
             </Tabs>
           </div>
 
