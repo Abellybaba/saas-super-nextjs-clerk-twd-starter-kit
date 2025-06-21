@@ -83,10 +83,13 @@ import {
   Apple,
   Download,
   FlaskConical,
+  Camera,
 } from "lucide-react";
 import NeobrutalismTemplate from "@/components/templates/NeobrutalismTemplate";
 import GlassmorphismTemplate from "@/components/templates/GlassmorphismTemplate";
 import Vcard7Template from "@/components/templates/Vcard7Template";
+import ModernTemplate from "@/components/templates/Modern";
+import RichProfileTemplate from "@/components/templates/RichProfileTemplate";
 
 // Types
 export interface LinkItem {
@@ -97,6 +100,13 @@ export interface LinkItem {
   isActive: boolean;
   icon?: string;
   featured?: boolean;
+  thumbnailUrl?: string; // For video thumbnails
+}
+
+export interface GalleryImage {
+  id: string;
+  url: string;
+  altText?: string;
 }
 
 export interface UserProfile {
@@ -109,6 +119,7 @@ export interface UserProfile {
   theme: string;
   template: string;
   links: LinkItem[];
+  gallery: GalleryImage[]; // User's image gallery
   views: number;
 }
 
@@ -529,7 +540,42 @@ const templates = [
     thumbnail:
       "https://raw.githubusercontent.com/Abelokoh/vlink/main/public/templates/vcard.png", // Placeholder
   },
+  {
+    id: "modern",
+    name: "Modern",
+    component: ModernTemplate,
+    thumbnail:
+      "https://raw.githubusercontent.com/Abelokoh/vlink/main/public/templates/modern.png", // Placeholder
+  },
+  {
+    id: "rich-profile",
+    name: "Rich Profile",
+    component: RichProfileTemplate,
+    thumbnail:
+      "https://raw.githubusercontent.com/Abelokoh/vlink/main/public/templates/rich-profile.png", // Placeholder
+  },
 ];
+
+// --- Helper Functions ---
+const getYouTubeThumbnail = (url: string) => {
+  let videoId;
+  try {
+    const urlObj = new URL(url);
+    if (urlObj.hostname === "youtu.be") {
+      videoId = urlObj.pathname.slice(1);
+    } else if (
+      urlObj.hostname === "www.youtube.com" ||
+      urlObj.hostname === "youtube.com"
+    ) {
+      videoId = urlObj.searchParams.get("v");
+    }
+    return videoId
+      ? `https://img.youtube.com/vi/${videoId}/mqdefault.jpg`
+      : null;
+  } catch (error) {
+    return null;
+  }
+};
 
 // --- MOCK DATA (In a real app, this would come from an API) ---
 const initialProfiles: UserProfile[] = [
@@ -543,6 +589,18 @@ const initialProfiles: UserProfile[] = [
     theme: "ocean",
     template: "neobrutalism",
     views: 10450,
+    gallery: [
+      {
+        id: "g1",
+        url: "https://images.unsplash.com/photo-1517329782449-85634231b47e?q=80&w=2070&auto=format&fit=crop",
+        altText: "Mountain landscape",
+      },
+      {
+        id: "g2",
+        url: "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?q=80&w=2070&auto=format&fit=crop",
+        altText: "Headphones on a yellow background",
+      },
+    ],
     links: [
       {
         id: "1",
@@ -556,10 +614,11 @@ const initialProfiles: UserProfile[] = [
       {
         id: "2",
         title: "YouTube Channel",
-        url: "https://youtube.com/@abellybaba",
+        url: "https://youtube.com/watch?v=Q1NKMPhP8PY",
         clicks: 889,
         isActive: true,
         icon: "youtube",
+        thumbnailUrl: "https://img.youtube.com/vi/Q1NKMPhP8PY/mqdefault.jpg",
       },
     ],
   },
@@ -573,6 +632,7 @@ const initialProfiles: UserProfile[] = [
     theme: "forest",
     template: "neobrutalism",
     views: 2340,
+    gallery: [],
     links: [
       {
         id: "3",
@@ -669,12 +729,23 @@ function LinksTab({
     const url = selectedSocial.urlPrefix
       ? `${selectedSocial.urlPrefix}${socialInputValue}`
       : socialInputValue;
-    onAddLink({
+
+    const newLinkPayload: Omit<LinkItem, "id" | "clicks" | "isActive"> = {
       title: selectedSocial.name,
       url,
       icon: selectedSocial.icon,
       featured: false,
-    });
+    };
+
+    // If it's a video link, try to get a thumbnail
+    if (selectedSocial.icon === "youtube" || selectedSocial.icon === "vimeo") {
+      const thumb = getYouTubeThumbnail(url);
+      if (thumb) {
+        newLinkPayload.thumbnailUrl = thumb;
+      }
+    }
+
+    onAddLink(newLinkPayload);
     setSocialInputValue("");
     setSocialModalOpen(false);
   };
@@ -925,7 +996,15 @@ function LinksTab({
               } ${draggedItem === link.id && "shadow-lg"}`}
             >
               <GripVertical className="w-5 h-5 text-muted-foreground" />
-              {getIconComponent(link.icon)}
+              {link.thumbnailUrl ? (
+                <img
+                  src={link.thumbnailUrl}
+                  alt={link.title}
+                  className="w-16 h-10 object-cover rounded-md bg-gray-200"
+                />
+              ) : (
+                getIconComponent(link.icon)
+              )}
               <div className="flex-1">
                 <h3 className="font-medium">{link.title}</h3>
                 <p className="text-sm text-muted-foreground truncate">
@@ -1117,6 +1196,76 @@ const AppearanceTab = ({
   );
 };
 
+const GalleryTab = ({
+  gallery,
+  onUpdateGallery,
+}: {
+  gallery: GalleryImage[];
+  onUpdateGallery: (gallery: GalleryImage[]) => void;
+}) => {
+  const [newImageUrl, setNewImageUrl] = useState("");
+
+  const handleAddImage = () => {
+    if (newImageUrl.trim()) {
+      const newImage: GalleryImage = {
+        id: Date.now().toString(),
+        url: newImageUrl,
+        altText: "User gallery image",
+      };
+      onUpdateGallery([...gallery, newImage]);
+      setNewImageUrl("");
+    }
+  };
+
+  const handleDeleteImage = (id: string) => {
+    onUpdateGallery(gallery.filter((img) => img.id !== id));
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Manage Gallery</CardTitle>
+        <CardDescription>
+          Add or remove images from your public gallery. Use image URLs.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="flex gap-2">
+          <Input
+            placeholder="Enter image URL..."
+            value={newImageUrl}
+            onChange={(e) => setNewImageUrl(e.target.value)}
+          />
+          <Button onClick={handleAddImage}>
+            <Plus className="w-4 h-4 mr-2" /> Add Image
+          </Button>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          {gallery.map((image) => (
+            <div key={image.id} className="relative group">
+              <img
+                src={image.url}
+                alt={image.altText}
+                className="w-full h-32 object-cover rounded-lg shadow-md"
+              />
+              <div className="absolute top-0 right-0 p-1">
+                <Button
+                  size="icon"
+                  variant="destructive"
+                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  onClick={() => handleDeleteImage(image.id)}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+};
+
 const AnalyticsTab = () => {
   return (
     <Card>
@@ -1252,6 +1401,7 @@ export default function DashboardPage() {
         theme: "default",
         template: "neobrutalism",
         links: [],
+        gallery: [], // Initialize with empty gallery
         views: 0,
       };
       const newProfiles = [...profiles, newProfile];
@@ -1407,10 +1557,10 @@ export default function DashboardPage() {
               </Dialog>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button asChild>
-            <Link href={`/${activeProfile.username}`} target="_blank">
+          <Button asChild variant="outline">
+            <Link href={`/${activeProfile?.username}`} target="_blank">
               <Eye className="mr-2 h-4 w-4" />
-              View Live Page
+              View Live Profile
             </Link>
           </Button>
         </div>
@@ -1436,6 +1586,10 @@ export default function DashboardPage() {
                   <TabsTrigger value="appearance">
                     <Palette className="mr-2 h-4 w-4" />
                     Appearance
+                  </TabsTrigger>
+                  <TabsTrigger value="gallery">
+                    <Camera className="mr-2 h-4 w-4" />
+                    Gallery
                   </TabsTrigger>
                   <TabsTrigger value="analytics">
                     <BarChart3 className="mr-2 h-4 w-4" />
@@ -1465,6 +1619,15 @@ export default function DashboardPage() {
                 <AppearanceTab
                   profile={activeProfile}
                   onUpdateProfile={handleUpdateActiveProfile}
+                />
+              </TabsContent>
+
+              <TabsContent value="gallery" className="pt-6">
+                <GalleryTab
+                  gallery={activeProfile.gallery}
+                  onUpdateGallery={(newGallery) =>
+                    handleUpdateActiveProfile({ gallery: newGallery })
+                  }
                 />
               </TabsContent>
 

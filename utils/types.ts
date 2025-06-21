@@ -45,3 +45,45 @@ const userUpdateSchema = z.object({
     .describe("user profile image URL"),
   user_id: z.string().describe("user ID"),
 });
+
+export interface MediaItem {
+  id: string;
+  type: "image" | "video";
+  url: string;
+  thumbnail?: string;
+  title?: string;
+  description?: string;
+}
+
+export interface LinkItem {
+  id: string;
+  title: string;
+  url: string;
+  isActive: boolean;
+  icon?: string;
+  featured?: boolean;
+  type?: "link" | "gallery" | "video" | "music" | "contact";
+  media?: MediaItem[];
+  color?: string;
+  description?: string;
+  thumbnail?: string; // For video link thumbnails
+}
+
+export interface UserProfile {
+  id: string;
+  displayName: string;
+  bio: string;
+  avatar: string;
+  username: string;
+  verified?: boolean;
+  links: LinkItem[];
+  gallery: { id: string; url: string; }[];
+  template: string;
+  coverImage?: string;
+  theme?: "dark" | "light" | "gradient";
+  stats?: {
+    followers: number;
+    following: number;
+    posts: number;
+  };
+}
